@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#006847" />
+    <title>Iniciar sesión | TESOEM</title>
+    <link rel="stylesheet" href="../assets/css/main.css" />
+  </head>
+  <body class="auth-page">
+    <main class="auth-wrap">
+      <section class="auth-story">
+        <a class="brand" href="login.html"
+          ><span class="brandmark">T</span>
+          <div>
+            <strong>TESOEM</strong><small>CONTROL DE MATERIALES</small>
+          </div></a
+        >
+        <div>
+          <span class="eyebrow">OFICINA DE MATERIALES</span>
+          <h1>Todo empieza<br />con un buen<br />control.</h1>
+          <p>
+            Una comunidad que comparte.<br />Un equipo que cuida sus recursos.
+          </p>
+        </div>
+        <small>Préstamos presenciales · TESOEM</small>
+      </section>
+      <section class="auth-form">
+        <span class="demo">Acceso local de integración</span>
+        <h2>Bienvenido de nuevo</h2>
+        <p class="muted">
+          Este login sigue siendo local. La API documentada todavía no ofrece
+          autenticación de empleados.
+        </p>
+        <form id="login-form">
+          <div id="error" role="alert"></div>
+          <div class="field">
+            <label for="matricula">Matrícula del empleado</label
+            ><input
+              id="matricula"
+              name="matricula"
+              required
+              autocomplete="username"
+              placeholder="Tu matrícula"
+              maxlength="30"
+            />
+          </div>
+          <div class="field">
+            <label for="password">Contraseña</label>
+            <div class="password-field">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                autocomplete="current-password"
+                placeholder="Tu contraseña"
+              /><button
+                type="button"
+                id="show-password"
+                aria-label="Mostrar contraseña"
+              >
+                Mostrar
+              </button>
+            </div>
+          </div>
+          <button class="btn full" id="submit">Iniciar sesión →</button>
+        </form>
+        <p class="auth-help">
+          ¿Necesitas acceso o cambiar tu contraseña?<br />Comunícate con el
+          administrador de la oficina.
+        </p>
+        <details class="demo-details">
+          <summary>Cuentas de prueba</summary>
+          <p>Contraseña: <b>Demo2026</b></p>
+          <button class="demo-account" data-demo="encargada">
+            Administrador<span
+              >Matrícula: encargada · Puede gestionar empleados</span
+            ></button
+          ><button class="demo-account" data-demo="EMP002">
+            Empleado<span>Matrícula: EMP002 · Gestiona préstamos</span></button
+          ><small
+            >Solo datos ficticios. Las cuentas se guardan en este navegador
+            durante la demostración.</small
+          >
+        </details>
+      </section>
+    </main>
+    <script src="../assets/js/services/employee-service.js"></script>
+    <script src="../assets/js/core/login-controller.js"></script>
+  </body>
+</html>
