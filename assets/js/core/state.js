@@ -42,9 +42,10 @@ const fmt = (s) =>
         timeZone: "America/Mexico_City",
         day: "2-digit",
         month: "short",
+        year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
       });
 const badge = (s) =>
-  `<span class="badge ${{ Pendiente: "pending", Aceptado: "pending", Entregado: "delivered", "Parcialmente devuelto": "partial", Devuelto: "done", Rechazado: "overdue" }[s] || ""}">${s}</span>`;
+  `<span class="badge ${{ Pendiente: "pending", Aceptado: "pending", Entregado: "delivered", "Parcialmente devuelto": "partial", Devuelto: "done", Rechazado: "overdue" }[s] || ""}">${esc(s)}</span>`;

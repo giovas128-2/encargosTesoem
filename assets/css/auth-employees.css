@@ -190,3 +190,5 @@
     font-size: 24px;
   }
 }
+
+.loan-meta > div {overflow-wrap:anywhere;min-width:0} .loan-head {gap:12px} #error:not(:empty){padding:12px;background:#fff1ed;color:#9c2b18;border-radius:8px;margin-bottom:16px} @media(max-width:600px){.loan-head{flex-wrap:wrap}.actions .btn{white-space:normal}}

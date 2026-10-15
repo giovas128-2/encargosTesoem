@@ -9,6 +9,7 @@ function render() {
     return;
   }
   const r = route();
+  if (r === "aceptados") { go("activos"); return; }
   if (
     ["pendientes", "aceptados", "activos", "vencidos", "historial"].includes(r)
   )
@@ -47,9 +48,6 @@ window.addEventListener("hashchange", () => {
   search = "";
   render();
   window.scrollTo(0, 0);
-});
-window.addEventListener("storage", (e) => {
-  if (e.key === "tesoem-employees-v1") location.reload();
 });
 setInterval(() => {
   if (

@@ -1,9 +1,9 @@
 // Transporte HTTP. No reintenta escrituras y nunca utiliza mode: no-cors.
 const ApiClient = (() => {
   async function request(action, values = {}, write = false) {
+    const url = new URL(API_CONFIG.url);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), API_CONFIG.timeoutMs);
-    const url = new URL(API_CONFIG.url);
     const options = {
       method: write ? "POST" : "GET",
       signal: controller.signal,
@@ -12,7 +12,7 @@ const ApiClient = (() => {
     };
     if (write) {
       options.headers = { "Content-Type": API_CONFIG.postContentType };
-      options.body = JSON.stringify({ ...values, accion: action });
+      options.body = JSON.stringify({ ...values, accion: action, ...(action !== "login" ? { token: EmployeeStore.token() } : {}) });
     } else {
       url.searchParams.set("accion", action);
       Object.entries(values).forEach(([k, v]) =>
@@ -37,7 +37,12 @@ const ApiClient = (() => {
             ? data.error
             : "El backend rechazó la operación.",
         );
-        error.rejected = data?.ok === false;
+        error.rejected = data?.ok === false && data?.codigo !== 'RESULTADO_INCIERTO';
+        if (['SESION_INVALIDA', 'SESION_EXPIRADA'].includes(data?.codigo)) {
+          EmployeeStore.clear();
+          if (!location.pathname.endsWith('login.html')) location.replace('login.html');
+        }
+        if (/acci[oó]n.*(no reconocida|desconocida)|unknown action/i.test(error.message)) error.message = 'El backend publicado aún no admite esta función. Falta implementar el contrato v2 de la carpeta docs.';
         throw error;
       }
       return data;

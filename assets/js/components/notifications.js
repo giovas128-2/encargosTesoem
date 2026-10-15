@@ -10,7 +10,6 @@ function toast(s) {
 const navs = [
   ["inicio", "Resumen", "home"],
   ["pendientes", "Solicitudes", "list"],
-  ["aceptados", "Por entregar", "box"],
   ["activos", "Préstamos activos", "box"],
   ["vencidos", "Vencidos", "clock"],
   ["inventario", "Inventario", "grid"],

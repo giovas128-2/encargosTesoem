@@ -1,12 +1,12 @@
 {
   "name": "tesoem-frontend",
-  "version": "1.1.0",
+  "version": "2.1.0",
   "private": true,
   "description": "Frontend de pr\u00e9stamos presenciales TESOEM. HTML, CSS y JavaScript sin dependencias.",
   "scripts": {
     "start": "node scripts/serve.cjs",
     "check": "node scripts/check.cjs",
-    "test": "node tests/api.test.cjs"
+    "test": "node tests/api.test.cjs && node tests/auth.test.cjs && node tests/backend.test.cjs"
   },
   "engines": {
     "node": ">=18"

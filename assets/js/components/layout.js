@@ -23,8 +23,8 @@ function shell(content) {
           )}</span><div class="user-name">${esc(user.name)}<small>${user.role === "admin" ? "Administrador" : "Empleado"}</small></div><button id="logout" class="logout" aria-label="Cerrar sesión">${icon("exit")}</button>`
         : '<span class="demo">Acceso de empleados</span>'
     }</div></header><main class="content">${connectionBanner()}${content}<footer class="footer"><span>TESOEM · Control de préstamos en oficina</span><span>${icon("shield")} API real · Horario de Ciudad de México</span></footer></main></div>`;
-  document.querySelector("#logout")?.addEventListener("click", () => {
-    EmployeeStore.logout();
+  document.querySelector("#logout")?.addEventListener("click", async () => {
+    try { await EmployeeStore.logout(); } catch {}
     location.replace("login.html");
   });
   document.querySelector("#notifications")?.addEventListener("click", () => {
@@ -47,5 +47,5 @@ const empty = (title, desc) =>
 
 function connectionBanner() {
   const st = LoanStore.status();
-  return `<div class="notice ${st.fresh ? "" : "warning"}" style="justify-content:space-between;align-items:center"><div><b>${st.fresh ? "Datos recibidos de la API" : st.syncing ? "Consultando API…" : "Datos sin actualizar"}</b><br>${st.lastSync ? "Última consulta: " + fmt(st.lastSync) + ". " : ""}Acceso de empleados aún local. Operaciones de prueba: ${esc(API_CONFIG.encargadoId)}.<br><small>Activos, vencidos e historial incluyen solo matrículas consultadas en esta sesión; no son un listado global.</small><div id="sync-error" role="alert">${esc(syncError)}</div></div><button class="btn outline small" id="refresh-api" ${st.syncing ? "disabled" : ""}>Actualizar</button></div>`;
+  return `<div class="notice ${st.fresh ? "" : "warning"}" style="justify-content:space-between;align-items:center"><div><b>${st.fresh ? "Datos recibidos de la API" : st.syncing ? "Consultando API…" : "Datos sin actualizar"}</b><br>${st.lastSync ? "Última consulta: " + fmt(st.lastSync) + ". " : ""}<small>Información de Google Sheets · El historial se conserva entre sesiones.</small><div id="sync-error" role="alert">${esc(syncError)}</div></div><button class="btn outline small" id="refresh-api" ${st.syncing ? "disabled" : ""}>Actualizar</button></div>`;
 }

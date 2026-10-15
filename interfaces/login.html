@@ -26,23 +26,22 @@
         <small>Préstamos presenciales · TESOEM</small>
       </section>
       <section class="auth-form">
-        <span class="demo">Acceso local de integración</span>
+        <span class="demo">Acceso de empleados</span>
         <h2>Bienvenido de nuevo</h2>
         <p class="muted">
-          Este login sigue siendo local. La API documentada todavía no ofrece
-          autenticación de empleados.
+          Ingresa con el correo y la contraseña de tu cuenta de la oficina.
         </p>
         <form id="login-form">
           <div id="error" role="alert"></div>
           <div class="field">
-            <label for="matricula">Matrícula del empleado</label
+            <label for="email">Correo electrónico</label
             ><input
-              id="matricula"
-              name="matricula"
+              id="email" type="email"
+              name="email"
               required
               autocomplete="username"
-              placeholder="Tu matrícula"
-              maxlength="30"
+              placeholder="nombre@correo.com"
+              maxlength="160"
             />
           </div>
           <div class="field">
@@ -70,22 +69,11 @@
           ¿Necesitas acceso o cambiar tu contraseña?<br />Comunícate con el
           administrador de la oficina.
         </p>
-        <details class="demo-details">
-          <summary>Cuentas de prueba</summary>
-          <p>Contraseña: <b>Demo2026</b></p>
-          <button class="demo-account" data-demo="encargada">
-            Administrador<span
-              >Matrícula: encargada · Puede gestionar empleados</span
-            ></button
-          ><button class="demo-account" data-demo="EMP002">
-            Empleado<span>Matrícula: EMP002 · Gestiona préstamos</span></button
-          ><small
-            >Solo datos ficticios. Las cuentas se guardan en este navegador
-            durante la demostración.</small
-          >
-        </details>
+
       </section>
     </main>
+    <script src="../assets/js/config/api-config.js"></script>
+    <script src="../assets/js/services/api-client.js"></script>
     <script src="../assets/js/services/employee-service.js"></script>
     <script src="../assets/js/core/login-controller.js"></script>
   </body>

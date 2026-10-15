@@ -1,210 +1,38 @@
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const vm = require("node:vm");
-const path = require("node:path");
-const root = path.resolve(__dirname, "..");
-const source = (p) => fs.readFileSync(path.join(root, "assets/js", p), "utf8");
-async function transportTests() {
-  let call,
-    response = { ok: true, materiales: [] };
-  const ctx = {
-    URL,
-    AbortController,
-    setTimeout,
-    clearTimeout,
-    fetch: async (url, options) => {
-      call = { url, options };
-      return { ok: true, json: async () => response };
-    },
-  };
-  vm.createContext(ctx);
-  vm.runInContext(
-    source("config/api-config.js") +
-      source("services/api-client.js") +
-      ";globalThis.client=ApiClient;",
-    ctx,
-  );
-  await ctx.client.get("prestamos_usuario", { matricula: "2024 A&1" });
-  assert.equal(new URL(call.url).searchParams.get("matricula"), "2024 A&1");
-  await ctx.client.post("aceptar_solicitud", {
-    prestamo_id: "P1",
-    encargado_id: "USR-003",
-  });
-  assert.equal(call.options.method, "POST");
-  assert.equal(
-    call.options.headers["Content-Type"],
-    "text/plain;charset=UTF-8",
-  );
-  assert.equal(JSON.parse(call.options.body).accion, "aceptar_solicitud");
-  assert.equal(call.options.mode, undefined);
-  response = { ok: false, error: "Sin existencia" };
-  await assert.rejects(
-    ctx.client.post("aceptar_solicitud", {}),
-    (e) => !e.uncertain && e.message === "Sin existencia",
-  );
-  ctx.fetch = async () => {
-    throw new TypeError("Network error");
-  };
-  await assert.rejects(
-    ctx.client.post("registrar_devolucion", {}),
-    (e) => e.uncertain === true,
-  );
-  ctx.fetch = async () => ({
-    ok: true,
-    json: async () => {
-      throw Error("HTML");
-    },
-  });
-  await assert.rejects(ctx.client.get("materiales"), /JSON/);
-}
-async function lifecycleTests() {
-  const m = {
-    id: "MAT-001",
-    nombre: "HDMI",
-    categoria: "Cables",
-    existencia_total: 10,
-    existencia_disponible: 10,
-    limite_por_solicitud: 3,
-    activo: true,
-  };
-  const l = {
-    id: "P1",
-    matricula: "2024001",
-    nombre: "Alumno <test>",
-    telefono: "5512345678",
-    estado: "pendiente",
-    fecha_solicitud: new Date().toISOString(),
-    fecha_limite: new Date(Date.now() + 3600000).toISOString(),
-    detalles: [
-      {
-        material_id: "MAT-001",
-        material: "HDMI",
-        cantidad_solicitada: 2,
-        cantidad_entregada: 0,
-        cantidad_devuelta: 0,
-      },
-    ],
-  };
-  let posts = [],
-    fail = false,
-    missing = false;
-  const ctx = {
-    Date,
-    Intl,
-    structuredClone,
-    API_CONFIG: { encargadoId: "USR-003" },
-    ApiClient: {
-      get: async (a, p) => {
-        if (fail) throw Error("No disponible");
-        if (a === "materiales") return structuredClone({ materiales: [m] });
-        if (a === "prestamos_pendientes") {
-          const { detalles, ...header } = l;
-          return {
-            prestamos:
-              l.estado === "pendiente" ? [structuredClone(header)] : [],
-          };
-        }
-        if (a === "prestamos_usuario") {
-          assert.equal(p.matricula, "2024001");
-          const value = structuredClone(l);
-          if (missing) delete value.detalles;
-          return { prestamos: [value] };
-        }
-        throw Error("Unexpected GET");
-      },
-      post: async (a, p) => {
-        posts.push({ a, p });
-        if (a === "aceptar_solicitud") {
-          l.estado = "aceptado";
-          m.existencia_disponible -= 2;
-        } else if (a === "registrar_entrega") {
-          l.estado = "entregado";
-          l.detalles[0].cantidad_entregada = 2;
-        } else if (a === "registrar_devolucion") {
-          l.detalles[0].cantidad_devuelta += p.cantidad;
-          m.existencia_disponible += p.cantidad;
-          l.estado =
-            l.detalles[0].cantidad_devuelta === 2 ? "devuelto" : "parcial";
-        }
-        return { ok: true, estado: l.estado };
-      },
-    },
-  };
-  vm.createContext(ctx);
-  vm.runInContext(
-    source("services/loan-service.js") + ";globalThis.store=LoanStore;",
-    ctx,
-  );
-  const s = ctx.store;
-  await s.refresh();
-  assert(s.get().loans[0].hasDetails);
-  assert.equal(s.get().materials[0].available, 10);
-  assert.equal(s.get().loans.length, 1);
-  await s.act("P1", "accept");
-  assert.equal(posts[0].p.encargado_id, "USR-003");
-  assert.equal(
-    s.get().materials[0].available,
-    10,
-    "No optimistic inventory edits",
-  );
-  assert.equal(s.status().fresh, false);
-  await assert.rejects(s.act("P1", "accept"), /Actualiza/);
-  await s.refresh();
-  assert.equal(s.get().loans[0].status, "Aceptado");
-  assert.equal(s.get().materials[0].available, 8);
-  await s.act("P1", "deliver");
-  await s.refresh();
-  assert.equal(s.get().materials[0].available, 8);
-  assert.equal(s.get().loans[0].status, "Entregado");
-  await assert.rejects(
-    s.act("P1", "return", { material_id: "MAT-001", cantidad: 3 }),
-  );
-  await s.act("P1", "return", { material_id: "MAT-001", cantidad: 1 });
-  assert.equal(posts.at(-1).p.material_id, "MAT-001");
-  assert.equal(posts.at(-1).p.cantidad, 1);
-  await s.refresh();
-  assert.equal(s.get().loans[0].status, "Parcialmente devuelto");
-  assert.equal(s.get().materials[0].available, 9);
-  l.fecha_limite = new Date(Date.now() - 60000).toISOString();
-  await s.refresh();
-  assert(s.overdue(s.get().loans[0]));
-  await s.act("P1", "return", { material_id: "MAT-001", cantidad: 1 });
-  await s.refresh();
-  assert.equal(s.get().loans[0].status, "Devuelto");
-  assert.equal(s.get().materials[0].available, 10);
-  assert(!s.overdue(s.get().loans[0]));
-  fail = true;
-  await assert.rejects(s.refresh());
-  assert.equal(s.status().fresh, false);
-  assert.equal(
-    s.get().materials[0].available,
-    10,
-    "Preserve prior snapshot but mark stale",
-  );
-  fail = false;
-  l.estado = "pendiente";
-  missing = true;
-  await s.refresh();
-  assert.equal(s.get().loans[0].hasDetails, false);
-  await assert.rejects(s.act("P1", "accept"), /detalles/);
-  missing = false;
-  await s.refresh();
-  ctx.ApiClient.post = async () => {
-    let e = Error("Respuesta perdida");
-    e.uncertain = true;
-    throw e;
-  };
-  await assert.rejects(s.act("P1", "accept"));
-  assert(s.status().writeBlocked);
-  assert(!s.status().fresh);
-  console.log(
-    "PASS: GET/POST, errores, lectura completa por matrícula, no doble descuento, aceptación/entrega separadas, devoluciones parciales, cantidades, vencimientos, datos incompletos y resultado incierto. Sin escrituras de red.",
-  );
-}
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const crypto = require('node:crypto');
 (async () => {
-  await transportTests();
-  await lifecycleTests();
-})().catch((e) => {
-  console.error(e);
-  process.exitCode = 1;
-});
+  let role = 'admin', available = 10, delivered = 0, returned = 0, status = 'pendiente', deleted = false;
+  let due = '2099-10-14T14:00:00-06:00', complete = true, fail = false;
+  const calls = [];
+  const backend = async (action, data) => {
+    calls.push({action, data});
+    if (action === 'panel') return {ok:true,version:2,completo:complete,usuarios:[],materiales:[{id:'MAT-001',nombre:'HDMI',existencia_total:10,existencia_disponible:available,limite_por_solicitud:3,activo:true}],prestamos:deleted?[]:[{id:'PRE-1',matricula:'001',estado:status,fecha_limite:due,fecha_solicitud:'2026-10-14T10:00:00-06:00',detalles:[{material_id:'MAT-001',cantidad_solicitada:2,cantidad_entregada:delivered,cantidad_devuelta:returned}]}]};
+    if (fail) {const e=new Error('Respuesta perdida');e.uncertain=true;throw e;}
+    if (action === 'aceptar_y_entregar') {status='entregado';delivered=2;available-=2;}
+    if (action === 'registrar_devolucion') {returned+=data.cantidad;available+=data.cantidad;status=returned===delivered?'devuelto':'parcial';}
+    if (action === 'eliminar_historial') deleted=true;
+    return {ok:true};
+  };
+  const ctx=vm.createContext({structuredClone,Date,Set,Map,console,crypto,Intl,ApiClient:{post:backend},EmployeeStore:{current:()=>({role}),setList:()=>{}}});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../assets/js/services/loan-service.js'),'utf8')+'\nglobalThis.store=LoanStore;',ctx);
+  const s=ctx.store;
+  await s.refresh();assert.equal(s.get().materials[0].available,10);
+  await s.act('PRE-1','accept');assert.equal(s.get().materials[0].available,10,'No inventario optimista');
+  await s.refresh();assert.equal(s.get().materials[0].available,8);assert(s.active(s.get().loans[0]));
+  assert(!s.overdue(s.get().loans[0]));
+  due='2020-01-01T10:00:00-06:00';await s.refresh();assert(s.overdue(s.get().loans[0]));
+  due='10:00:00';await s.refresh();assert(!s.overdue(s.get().loans[0]),'Una hora aislada no se clasifica como vencida');
+  await assert.rejects(s.act('PRE-1','return',{material_id:'MAT-001',cantidad:3}));
+  await s.act('PRE-1','return',{material_id:'MAT-001',cantidad:1});await s.refresh();assert.equal(s.get().loans[0].status,'Parcialmente devuelto');assert.equal(s.get().materials[0].available,9);
+  await s.act('PRE-1','return',{material_id:'MAT-001',cantidad:1});await s.refresh();assert(s.terminal(s.get().loans[0]));assert(!s.active(s.get().loans[0]));assert.equal(s.get().materials[0].available,10);
+  await s.refresh();assert.equal(s.get().loans.length,1,'El historial se recupera completo');
+  role='employee';await assert.rejects(s.act('PRE-1','delete'));role='admin';
+  fail=true;await assert.rejects(s.act('PRE-1','delete'));assert(s.status().writeBlocked);assert.equal(s.get().loans.length,1);await assert.rejects(s.act('PRE-1','delete'));
+  fail=false;await s.refresh();await s.act('PRE-1','delete');await s.refresh();assert.equal(s.get().loans.length,0);assert.equal(s.get().materials[0].available,10);
+  complete=false;await assert.rejects(s.refresh());assert.equal(s.status().fresh,false);
+  assert(calls.filter(c=>c.action!=='panel').every(c=>c.data.operacion_id),'Operaciones identificables');
+  console.log('OK: inventario remoto, parcial/completo, fechas, historial, roles, bloqueo de reintentos y listado completo.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

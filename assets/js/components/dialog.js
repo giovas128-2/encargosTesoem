@@ -17,7 +17,7 @@ function dialog(html, bind) {
   el.onkeydown = (e) => {
     if (e.key === "Escape") close();
     if (e.key === "Tab") {
-      let a = [...el.querySelectorAll("button,input,textarea")];
+      let a = [...el.querySelectorAll("button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),a[href]")];
       if (e.shiftKey && document.activeElement === a[0]) {
         e.preventDefault();
         a.at(-1).focus();
