@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#006847" />
+    <title>Iniciar sesión | ADMINISTRACION</title>
+    <link rel="stylesheet" href="../assets/css/main.css" />
+  </head>
+  <body class="auth-page">
+    <main class="auth-wrap">
+      <section class="auth-story">
+        <a class="brand" href="login.html"
+          ><span class="brandmark">T</span>
+          <div>
+            <strong>ADMINISTRACION</strong><small>CONTROL DE MATERIALES</small>
+          </div></a
+        >
+        <div>
+          <span class="eyebrow">OFICINA DE MATERIALES</span>
+          <h1>Todo empieza<br />con un buen<br />control.</h1>
+          <p>
+            Una comunidad que comparte.<br />Un equipo que cuida sus recursos.
+          </p>
+        </div>
+        <small>Préstamos presenciales · ADMINISTRACION</small>
+      </section>
+      <section class="auth-form">
+        <span class="demo">Acceso de empleados</span>
+        <h2>Bienvenido de nuevo</h2>
+        <p class="muted">
+          Ingresa con el correo y la contraseña de tu cuenta de la oficina.
+        </p>
+        <form id="login-form">
+          <div id="error" role="alert"></div>
+          <div class="field">
+            <label for="email">Correo electrónico</label
+            ><input
+              id="email" type="email"
+              name="email"
+              required
+              autocomplete="username"
+              placeholder="nombre@correo.com"
+              maxlength="160"
+            />
+          </div>
+          <div class="field">
+            <label for="password">Contraseña</label>
+            <div class="password-field">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                autocomplete="current-password"
+                placeholder="Tu contraseña"
+              /><button
+                type="button"
+                id="show-password"
+                aria-label="Mostrar contraseña"
+              >
+                Mostrar
+              </button>
+            </div>
+          </div>
+          <button class="btn full" id="submit">Iniciar sesión →</button>
+        </form>
+        <p class="auth-help">
+          ¿Necesitas acceso o cambiar tu contraseña?<br />Comunícate con el
+          administrador de la oficina.
+        </p>
+
+      </section>
+    </main>
+    <script src="../assets/js/config/api-config.js"></script>
+    <script src="../assets/js/services/api-client.js"></script>
+    <script src="../assets/js/services/employee-service.js"></script>
+    <script src="../assets/js/core/login-controller.js"></script>
+  </body>
+</html>

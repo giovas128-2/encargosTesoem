@@ -1,0 +1,755 @@
+API — Sistema de Préstamos QR
+
+1. URL base
+
+La API está publicada mediante Google Apps Script:
+
+"https://script.google.com/macros/s/AKfycbwO4Q7-WKcVdizwkZxAdGTzzfGwP80OqKjVwEspAx4HObHyhFbeoU04Y98uC0RAryBf5A/exec"
+
+Todas las peticiones deben utilizar esta URL.
+
+---
+
+2. Cómo funciona
+
+El frontend se comunica con la API mediante:
+
+- "GET" → consultar información.
+- "POST" → crear solicitudes y ejecutar acciones.
+
+Los alumnos no necesitan acceder directamente a Google Sheets.
+
+Flujo principal:
+
+Alumno
+   ↓
+Frontend / Google Form
+   ↓
+Google Apps Script API
+   ↓
+Google Sheets
+
+El flujo de un préstamo es:
+
+pendiente
+   ↓
+aceptado
+   ↓
+entregado
+   ↓
+parcial
+   ↓
+devuelto
+
+Una solicitud también puede pasar de:
+
+pendiente → rechazado
+
+---
+
+3. GET — Consultar materiales
+
+Endpoint
+
+GET ?accion=materiales
+
+URL completa:
+
+https://script.google.com/macros/s/AKfycbwO4Q7-WKcVdizwkZxAdGTzzfGwP80OqKjVwEspAx4HObHyhFbeoU04Y98uC0RAryBf5A/exec?accion=materiales
+
+Ejemplo con JavaScript
+
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbwO4Q7-WKcVdizwkZxAdGTzzfGwP80OqKjVwEspAx4HObHyhFbeoU04Y98uC0RAryBf5A/exec";
+
+const respuesta = await fetch(
+  ${API_URL}?accion=materiales
+);
+
+const datos = await respuesta.json();
+
+console.log(datos);
+
+Respuesta
+
+{
+  "ok": true,
+  "materiales": [
+    {
+      "id": "MAT-001",
+      "nombre": "Cable HDMI",
+      "categoria": "Cables",
+      "existencia_total": 10,
+      "existencia_disponible": 10,
+      "limite_por_solicitud": 3,
+      "activo": true
+    }
+  ]
+}
+
+El frontend puede utilizar "existencia_disponible" para mostrar cuántas unidades hay disponibles.
+
+---
+
+4. GET — Consultar préstamos de un alumno
+
+Endpoint
+
+GET ?accion=prestamos_usuario&matricula=XXXXXXXX
+
+Ejemplo:
+
+?accion=prestamos_usuario&matricula=2024888
+
+JavaScript
+
+const matricula = "2024888";
+
+const respuesta = await fetch(
+  ${API_URL}?accion=prestamos_usuario&matricula=${encodeURIComponent(matricula)}
+);
+
+const datos = await respuesta.json();
+
+console.log(datos);
+
+Respuesta
+
+{
+  "ok": true,
+  "matricula": "2024888",
+  "prestamos": [
+    {
+      "id": "PRE-F1152057",
+      "matricula": "2024888",
+      "nombre": "Alumno",
+      "telefono": "5512345678",
+      "estado": "devuelto",
+      "fecha_solicitud": "2026-10-05T...",
+      "fecha_limite": "2026-10-12T...",
+      "fecha_entrega": "2026-10-05T...",
+      "fecha_devolucion": "2026-10-05T...",
+      "motivo": "Proyecto",
+      "detalles": [
+        {
+          "material_id": "MAT-001",
+          "material": "Cable HDMI",
+          "cantidad_solicitada": 1,
+          "cantidad_entregada": 1,
+          "cantidad_devuelta": 1
+        }
+      ]
+    }
+  ]
+}
+
+Esta consulta sirve para la pantalla de:
+
+"Mis préstamos"
+
+---
+
+5. GET — Consultar solicitudes pendientes
+
+Esta consulta está pensada principalmente para la interfaz de la encargada.
+
+Endpoint
+
+GET ?accion=prestamos_pendientes
+
+JavaScript
+
+const respuesta = await fetch(
+  ${API_URL}?accion=prestamos_pendientes
+);
+
+const datos = await respuesta.json();
+
+console.log(datos);
+
+Respuesta
+
+{
+  "ok": true,
+  "cantidad": 1,
+  "prestamos": [
+    {
+      "id": "PRE-XXXXXXXX",
+      "matricula": "2024001",
+      "nombre": "Juan Pérez",
+      "telefono": "525512345678",
+      "estado": "pendiente",
+      "fecha_solicitud": "2026-10-05T...",
+      "fecha_limite": "2026-10-12T...",
+      "fecha_entrega": "",
+      "fecha_devolucion": "",
+      "motivo": "Clase",
+      "detalles": [
+        {
+          "material_id": "MAT-001",
+          "material": "Cable HDMI",
+          "cantidad_solicitada": 1,
+          "cantidad_entregada": 0,
+          "cantidad_devuelta": 0
+        }
+      ]
+    }
+  ]
+}
+
+La interfaz puede mostrar estas solicitudes en una tabla o tarjetas para que la encargada pueda aceptarlas o rechazarlas.
+
+---
+
+6. POST — Crear solicitud
+
+Acción
+
+crear_solicitud
+
+Petición
+
+{
+  "accion": "crear_solicitud",
+  "matricula": "2024999",
+  "nombre": "Alumno API",
+  "telefono": "5512345678",
+  "items": [
+    {
+      "material_id": "MAT-001",
+      "cantidad": 1
+    },
+    {
+      "material_id": "MAT-004",
+      "cantidad": 1
+    }
+  ],
+  "fecha_limite": "2026-10-12T18:00:00",
+  "motivo": "Práctica escolar"
+}
+
+JavaScript
+
+const respuesta = await fetch(API_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accion: "crear_solicitud",
+    matricula: "2024999",
+    nombre: "Alumno API",
+    telefono: "5512345678",
+    items: [
+      {
+        material_id: "MAT-001",
+        cantidad: 1
+      },
+      {
+        material_id: "MAT-004",
+        cantidad: 1
+      }
+    ],
+    fecha_limite: "2026-10-12T18:00:00",
+    motivo: "Práctica escolar"
+  })
+});
+
+const datos = await respuesta.json();
+
+console.log(datos);
+
+Respuesta exitosa
+
+{
+  "ok": true,
+  "prestamo_id": "PRE-XXXXXXXX",
+  "estado": "pendiente"
+}
+
+Importante
+
+Crear la solicitud NO descuenta inventario.
+
+El inventario solamente se descuenta cuando la encargada acepta la solicitud.
+
+---
+
+7. POST — Aceptar solicitud
+
+Acción
+
+aceptar_solicitud
+
+Esta acción solamente puede ejecutarla una encargada válida.
+
+Petición
+
+{
+  "accion": "aceptar_solicitud",
+  "prestamo_id": "PRE-XXXXXXXX",
+  "encargado_id": "USR-003"
+}
+
+JavaScript
+
+const respuesta = await fetch(API_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accion: "aceptar_solicitud",
+    prestamo_id: "PRE-XXXXXXXX",
+    encargado_id: "USR-003"
+  })
+});
+
+const datos = await respuesta.json();
+
+console.log(datos);
+
+Respuesta
+
+{
+  "ok": true,
+  "prestamo_id": "PRE-XXXXXXXX",
+  "estado": "aceptado"
+}
+
+Qué hace internamente
+
+Cuando se acepta:
+
+1. Verifica que la solicitud esté en "pendiente".
+2. Verifica que la encargada sea válida.
+3. Verifica que existan los materiales.
+4. Verifica que los materiales estén activos.
+5. Verifica los límites por solicitud.
+6. Verifica existencia disponible.
+7. Descuenta el inventario.
+8. Registra movimientos de tipo "reserva".
+9. Cambia el préstamo a "aceptado".
+
+---
+
+8. POST — Rechazar solicitud
+
+Acción
+
+rechazar_solicitud
+
+Petición
+
+{
+  "accion": "rechazar_solicitud",
+  "prestamo_id": "PRE-XXXXXXXX",
+  "encargado_id": "USR-003"
+}
+
+JavaScript
+
+const respuesta = await fetch(API_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accion: "rechazar_solicitud",
+    prestamo_id: "PRE-XXXXXXXX",
+    encargado_id: "USR-003"
+  })
+});
+
+const datos = await respuesta.json();
+
+console.log(datos);
+
+Resultado esperado
+
+{
+  "ok": true,
+  "prestamo_id": "PRE-XXXXXXXX",
+  "estado": "rechazado"
+}
+
+Importante
+
+Rechazar una solicitud:
+
+- No descuenta inventario.
+- No registra una reserva.
+- Solamente cambia el estado de "pendiente" a "rechazado".
+
+---
+
+9. POST — Registrar entrega
+
+Acción
+
+registrar_entrega
+
+Se utiliza cuando la encargada entrega físicamente los materiales al alumno.
+
+Petición
+
+{
+  "accion": "registrar_entrega",
+  "prestamo_id": "PRE-XXXXXXXX",
+  "encargado_id": "USR-003"
+}
+
+JavaScript
+
+const respuesta = await fetch(API_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accion: "registrar_entrega",
+    prestamo_id: "PRE-XXXXXXXX",
+    encargado_id: "USR-003"
+  })
+});
+
+const datos = await respuesta.json();
+
+console.log(datos);
+
+Respuesta
+
+{
+  "ok": true,
+  "prestamo_id": "PRE-XXXXXXXX",
+  "estado": "entregado"
+}
+
+Importante
+
+Registrar la entrega NO vuelve a descontar inventario.
+
+El inventario ya fue reservado/descontado cuando la solicitud fue aceptada.
+
+---
+
+10. POST — Registrar devolución
+
+Acción
+
+registrar_devolucion
+
+Sirve para registrar la devolución de uno o varios materiales.
+
+Petición
+
+{
+  "accion": "registrar_devolucion",
+  "prestamo_id": "PRE-XXXXXXXX",
+  "material_id": "MAT-001",
+  "cantidad": 1,
+  "encargado_id": "USR-003"
+}
+
+JavaScript
+
+const respuesta = await fetch(API_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    accion: "registrar_devolucion",
+    prestamo_id: "PRE-XXXXXXXX",
+    material_id: "MAT-001",
+    cantidad: 1,
+    encargado_id: "USR-003"
+  })
+});
+
+const datos = await respuesta.json();
+
+console.log(datos);
+
+Devolución parcial
+
+Si todavía faltan materiales:
+
+{
+  "ok": true,
+  "prestamo_id": "PRE-XXXXXXXX",
+  "material_id": "MAT-001",
+  "cantidad_devuelta": 1,
+  "estado": "parcial"
+}
+
+Devolución completa
+
+Cuando todos los materiales fueron devueltos:
+
+{
+  "ok": true,
+  "prestamo_id": "PRE-XXXXXXXX",
+  "material_id": "MAT-004",
+  "cantidad_devuelta": 1,
+  "estado": "devuelto",
+  "fecha_devolucion": "2026-10-06T05:43:54.416Z"
+}
+
+Qué ocurre con el inventario
+
+Al devolver un material, la cantidad devuelta se vuelve a sumar a:
+
+existencia_disponible
+
+También se registra un movimiento de tipo:
+
+devolucion
+
+---
+
+11. Manejo de errores
+
+Todas las acciones pueden devolver:
+
+{
+  "ok": false,
+  "error": "Mensaje del error"
+}
+
+Por eso el frontend debe comprobar siempre:
+
+const datos = await respuesta.json();
+
+if (!datos.ok) {
+  console.error(datos.error);
+
+  // Mostrar mensaje al usuario
+  return;
+}
+
+Ejemplo:
+
+if (!datos.ok) {
+  alert(datos.error);
+  return;
+}
+
+---
+
+12. Estados del préstamo
+
+Los estados utilizados actualmente son:
+
+Estado| Significado
+"pendiente"| El alumno realizó la solicitud y espera revisión
+"aceptado"| La encargada aprobó la solicitud y el inventario fue reservado
+"entregado"| Los materiales fueron entregados al alumno
+"parcial"| El alumno ya devolvió algunos materiales, pero faltan otros
+"devuelto"| Todos los materiales fueron devueltos
+"rechazado"| La encargada rechazó la solicitud
+
+---
+
+13. Identificadores importantes
+
+Materiales
+
+Ejemplos actuales:
+
+MAT-001 → Cable HDMI
+MAT-002 → Proyector
+MAT-003 → Extensión eléctrica
+MAT-004 → Adaptador USB-C
+
+Encargada
+
+Actualmente:
+
+USR-003
+
+El frontend debe enviar este ID al realizar acciones administrativas.
+
+No debe enviar el nombre de la encargada como identificador.
+
+---
+
+14. Recomendación para el frontend
+
+Crear una sola constante:
+
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbwO4Q7-WKcVdizwkZxAdGTzzfGwP80OqKjVwEspAx4HObHyhFbeoU04Y98uC0RAryBf5A/exec";
+
+Y utilizarla para todas las peticiones.
+
+Por ejemplo:
+
+async function obtenerMateriales() {
+  const respuesta = await fetch(
+    ${API_URL}?accion=materiales
+  );
+
+  return await respuesta.json();
+}
+
+Para POST:
+
+async function aceptarSolicitud(prestamoId) {
+
+  const respuesta = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      accion: "aceptar_solicitud",
+      prestamo_id: prestamoId,
+      encargado_id: "USR-003"
+    })
+  });
+
+  return await respuesta.json();
+}
+
+---
+
+15. Qué debe hacer cada parte del frontend
+
+Alumno
+
+Puede utilizar:
+
+GET materiales
+GET prestamos_usuario
+POST crear_solicitud
+
+Encargada / administrador
+
+Puede utilizar:
+
+GET materiales
+GET prestamos_pendientes
+GET prestamos_usuario
+POST aceptar_solicitud
+POST rechazar_solicitud
+POST registrar_entrega
+POST registrar_devolucion
+
+---
+
+16. Regla importante del inventario
+
+El frontend NO debe modificar inventario directamente.
+
+El frontend solamente solicita acciones a la API.
+
+La API se encarga de:
+
+Aceptar
+   ↓
+Descontar inventario
+
+Entregar
+   ↓
+No modificar inventario
+
+Devolver
+   ↓
+Aumentar inventario
+
+Esto evita que el frontend pueda alterar directamente las existencias.
+
+---
+
+17. Resumen rápido de endpoints
+
+Método| Acción| Uso
+GET| "materiales"| Obtener inventario
+GET| "prestamos_usuario"| Ver préstamos de un alumno
+GET| "prestamos_pendientes"| Ver solicitudes pendientes
+POST| "crear_solicitud"| Crear préstamo
+POST| "aceptar_solicitud"| Aprobar solicitud
+POST| "rechazar_solicitud"| Rechazar solicitud
+POST| "registrar_entrega"| Marcar materiales como entregados
+POST| "registrar_devolucion"| Registrar devolución
+
+---
+
+18. Ejemplo del flujo completo
+
+1. Alumno crea solicitud
+
+POST crear_solicitud
+
+Resultado:
+
+pendiente
+
+2. Encargada consulta solicitudes
+
+GET prestamos_pendientes
+
+3. Encargada acepta
+
+POST aceptar_solicitud
+
+Resultado:
+
+aceptado
+
+En este momento se descuenta inventario.
+
+4. Encargada entrega materiales
+
+POST registrar_entrega
+
+Resultado:
+
+entregado
+
+5. Alumno devuelve un material
+
+POST registrar_devolucion
+
+Resultado:
+
+parcial
+
+6. Alumno devuelve el último material
+
+POST registrar_devolucion
+
+Resultado:
+
+devuelto
+
+---
+
+19. Pruebas realizadas
+
+La API ya fue probada exitosamente con el siguiente flujo:
+
+PRE-0251C222
+
+crear_solicitud
+      ↓
+pendiente
+      ↓
+aceptar_solicitud
+      ↓
+aceptado
+      ↓
+registrar_entrega
+      ↓
+entregado
+      ↓
+devolver MAT-001
+      ↓
+parcial
+      ↓
+devolver MAT-004
+      ↓
+devuelto
+
+Por lo tanto, el flujo principal ya está funcionando desde el backend mediante peticiones HTTP.

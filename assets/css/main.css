@@ -1,0 +1,7 @@
+@import url("base.css");
+@import url("auth-employees.css");
+
+.whatsapp-contact { margin-top: 16px; border-top: 1px solid #dde5df; padding-top: 16px; overflow-wrap: anywhere; }
+.whatsapp-contact p { margin: 10px 0; font-size: .9rem; }
+.whatsapp-fallback { color: #006847; font-size: .9rem; text-decoration: underline; }
+#retry-whatsapp { margin: 8px; }
