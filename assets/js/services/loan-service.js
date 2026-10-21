@@ -55,6 +55,10 @@ const LoanStore = (() => {
       const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {timeZone:'America/Mexico_City', year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(iso)).map(x=>[x.type,x.value]));
       return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
     },
+    saveMaterial: data => {
+      if (EmployeeStore.current()?.role !== 'admin') throw Error('Solo el administrador puede editar el inventario.');
+      return mutate('guardar_material', data);
+    },
     create: data => mutate('crear_solicitud', data),
     act: async (id, action, data = {}) => {
       const l = state.loans.find(l => l.id === id);
