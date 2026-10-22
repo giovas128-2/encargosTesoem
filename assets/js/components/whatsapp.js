@@ -5,5 +5,5 @@ function whatsappCard(l) {
 }
 function whatsappNotice() {
   const st = WhatsAppStore.status();
-  return `<div class="notice ${st.error ? 'warning' : ''}" role="status">${st.error ? esc(st.error) : st.loading ? 'Consultando recordatorios de WhatsApp…' : 'Los recordatorios dependen de la actualización del backend. Actualizar esta página consulta la lista; no genera ni envía mensajes.'}${st.error ? '<button class="btn outline small" id="retry-whatsapp">Reintentar recordatorios</button>' : ''}</div>`;
+  return `<div class="notice ${st.error ? 'warning' : ''}" role="status">${st.error ? esc(st.error) : st.loading ? 'Consultando recordatorios de WhatsApp…' : 'Los avisos se preparan automáticamente. Pulsa Actualizar para consultar los disponibles. Tú revisas y envías cada mensaje en WhatsApp.'}${st.error ? '<button class="btn outline small" id="retry-whatsapp">Reintentar recordatorios</button>' : ''}</div>`;
 }

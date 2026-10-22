@@ -12,7 +12,7 @@ function shell(content) {
       )
       .join(
         "",
-      )}</nav><div class="sidefoot"><span class="demo">Integración con API</span><p>Recibe, entrega y recupera.<br>Los recursos son de todos.</p></div></aside><div class="main"><header class="topbar"><div class="crumb">Servicios escolares &nbsp; / &nbsp; <b>Oficina de materiales</b></div><a href="#inicio" class="brand mobile-brand"><span class="brandmark">${icon("school")}</span><strong>ADMINISTRACIÓN</strong></a><div class="userarea">${
+      )}</nav><div class="sidefoot"><span class="demo">Al servicio de tu comunidad</span><p>Recibe, entrega y recupera.<br>Los recursos son de todos.</p></div></aside><div class="main"><header class="topbar"><div class="crumb">Servicios escolares &nbsp; / &nbsp; <b>Oficina de materiales</b></div><a href="#inicio" class="brand mobile-brand"><span class="brandmark">${icon("school")}</span><strong>ADMINISTRACIÓN</strong></a><div class="userarea">${
       logged
         ? `<button class="btn outline small" id="notifications" aria-label="${unread} solicitudes nuevas">${icon("list")} ${unread} nuevas</button><span class="avatar">${esc(
             user.name
@@ -22,7 +22,7 @@ function shell(content) {
               .join(""),
           )}</span><div class="user-name">${esc(user.name)}<small>${user.role === "admin" ? "Administrador" : "Empleado"}</small></div><button id="logout" class="logout" aria-label="Cerrar sesión">${icon("exit")}</button>`
         : '<span class="demo">Acceso de empleados</span>'
-    }</div></header><main class="content">${connectionBanner()}${content}<footer class="footer"><span>ADMINISTRACIÓN · Control de préstamos en oficina</span><span>${icon("shield")} API real · Horario de Ciudad de México</span></footer></main></div>`;
+    }</div></header><main class="content">${connectionBanner()}${content}<footer class="footer"><span>ADMINISTRACIÓN · Control de préstamos en oficina</span><span>${icon("shield")} Horario de Ciudad de México</span></footer></main></div>`;
   document.querySelector("#logout")?.addEventListener("click", async () => {
     try { await EmployeeStore.logout(); } catch {}
     location.replace("login.html");
@@ -47,5 +47,5 @@ const empty = (title, desc) =>
 
 function connectionBanner() {
   const st = LoanStore.status();
-  return `<div class="notice ${st.fresh ? "" : "warning"}" style="justify-content:space-between;align-items:center"><div><b>${st.fresh ? "Datos recibidos de la API" : st.syncing ? "Consultando API…" : "Datos sin actualizar"}</b><br>${st.lastSync ? "Última consulta: " + fmt(st.lastSync) + ". " : ""}<small>Información de Google Sheets · El historial se conserva entre sesiones.</small><div id="sync-error" role="alert">${esc(syncError)}</div></div><button class="btn outline small" id="refresh-api" ${st.syncing ? "disabled" : ""}>Actualizar</button></div>`;
+  return `<div class="connection-banner notice ${st.fresh ? "" : "warning"}" style="justify-content:space-between;align-items:center"><div><b>${st.fresh ? "Información actualizada" : st.syncing ? "Actualizando información…" : "Información pendiente de actualizar"}</b><br>${st.lastSync ? "Última actualización: " + fmt(st.lastSync) + ". " : ""}<small>Tus registros e historial se conservan al cerrar sesión.</small><div id="sync-error" role="alert">${esc(syncError)}</div></div><button class="btn outline small" id="refresh-api" ${st.syncing ? "disabled" : ""}>Actualizar</button></div>`;
 }

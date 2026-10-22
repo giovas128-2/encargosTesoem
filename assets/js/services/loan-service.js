@@ -2,8 +2,8 @@
 const LoanStore = (() => {
   let state = { materials: [], loans: [] }, fresh = false, syncing = null, writing = false, writeBlocked = false, lastSync = null;
   const states = { pendiente: 'Pendiente', aceptado: 'Aceptado', entregado: 'Entregado', parcial: 'Parcialmente devuelto', devuelto: 'Devuelto', rechazado: 'Rechazado', cancelado: 'Cancelado' };
-  const integer = n => { n = Number(n); if (!Number.isSafeInteger(n) || n < 0) throw Error('Cantidad inválida en la API.'); return n; };
-  const array = a => { if (!Array.isArray(a)) throw Error('La API debe devolver el listado completo.'); return a; };
+  const integer = n => { n = Number(n); if (!Number.isSafeInteger(n) || n < 0) throw Error('Hay una cantidad incorrecta en los registros. Comunícate con el administrador.'); return n; };
+  const array = a => { if (!Array.isArray(a)) throw Error('No se recibió toda la información. Actualiza e inténtalo de nuevo.'); return a; };
   const fullDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).getUTCFullYear() >= 2020;
   function loan(l) {
     if (!l.id || !l.matricula || !states[l.estado]) throw Error('Formato de préstamo inesperado.');
@@ -24,9 +24,9 @@ const LoanStore = (() => {
     fresh = false;
     syncing = (async () => {
       const d = await ApiClient.post('panel');
-      if (d.version !== 2 || d.completo !== true) throw Error('Falta el listado global completo del contrato v2. No se mostrarán totales parciales.');
+      if (d.version !== 2 || d.completo !== true) throw Error('No pudimos cargar la información completa. Actualiza la página; si continúa, avisa al administrador.');
       const loans = array(d.prestamos).map(loan), materials = array(d.materiales).map(material);
-      if (new Set(loans.map(l => l.id)).size !== loans.length) throw Error('La API devolvió préstamos duplicados.');
+      if (new Set(loans.map(l => l.id)).size !== loans.length) throw Error('Hay préstamos repetidos en los registros. Comunícate con el administrador.');
       if (materials.some(m => m.available > m.total)) throw Error('El inventario disponible supera el total.');
       if (EmployeeStore.current()?.role === 'admin') EmployeeStore.setList(array(d.usuarios));
       state = { loans, materials };

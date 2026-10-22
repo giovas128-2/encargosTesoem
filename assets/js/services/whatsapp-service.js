@@ -12,7 +12,7 @@ const WhatsAppStore = (() => {
     pending = (async () => {
       try {
         const data = await ApiClient.post('recordatorios_whatsapp');
-        if (!Array.isArray(data.recordatorios)) throw Error('La API no devolvió un listado válido de recordatorios.');
+        if (!Array.isArray(data.recordatorios)) throw Error('No pudimos cargar los recordatorios. Inténtalo de nuevo.');
         for (const r of data.recordatorios) {
           if (!r || typeof r !== 'object') continue;
           const id = String(r.prestamo_id || '').trim();
@@ -33,13 +33,13 @@ const WhatsAppStore = (() => {
     if (loading) return unavailable('Consultando recordatorios…');
     if (error) return unavailable('No se pudieron consultar los recordatorios. Usa Reintentar.');
     if (!loaded) return unavailable('Actualiza para consultar los recordatorios.');
-    if (!records.has(l.id)) return unavailable('Aún no hay recordatorio para este préstamo. Espera la actualización del backend.');
+    if (!records.has(l.id)) return unavailable('El aviso todavía no está disponible. Espera un momento y pulsa Actualizar.');
     const r = records.get(l.id);
-    if (!r) return unavailable('Hay recordatorios duplicados para este préstamo. Revisa Recordatorios.');
+    if (!r) return unavailable('Hay más de un aviso para este préstamo. Pide al administrador que lo revise.');
     if (String(r.matricula || '').trim() !== l.user ||
-        Date.parse(r.fecha_limite) !== Date.parse(l.due)) return unavailable('El recordatorio no coincide con los datos actuales. Actualízalo en el backend.');
+        Date.parse(r.fecha_limite) !== Date.parse(l.due)) return unavailable('El aviso necesita actualizarse con los datos del préstamo. Si persiste, comunícate con el administrador.');
     const number = phone(l.phone);
-    if (!number || phone(r.telefono) !== number) return unavailable('Falta un teléfono mexicano válido y coincidente en el préstamo y el recordatorio.');
+    if (!number || phone(r.telefono) !== number) return unavailable('Revisa el teléfono del alumno: debe ser válido y coincidir con el del aviso.');
     try {
       if (typeof r.enlace_whatsapp !== 'string' || !r.enlace_whatsapp.startsWith('https://wa.me/')) throw Error();
       const url = new URL(r.enlace_whatsapp);
@@ -49,7 +49,7 @@ const WhatsAppStore = (() => {
           typeof r.mensaje !== 'string' || !r.mensaje.trim() || r.mensaje.length > 10000 ||
           url.searchParams.get('text') !== r.mensaje) throw Error();
       return {url: url.href, reason: ''};
-    } catch (_) { return unavailable('El enlace de WhatsApp falta o no es válido. Revisa Recordatorios.'); }
+    } catch (_) { return unavailable('No hay un enlace válido para abrir WhatsApp. Pide al administrador que revise el aviso.'); }
   }
   return {refresh, reset, forLoan, status: () => ({loading, error, loaded})};
 })();

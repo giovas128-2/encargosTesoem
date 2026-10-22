@@ -1,7 +1,7 @@
 function inventory() {
   const s = LoanStore.get(), st = LoanStore.status();
   const admin = user.role === 'admin', blocked = !st.fresh || st.syncing || st.writing;
-  shell(`${heading('Inventario', 'Materiales y existencias registrados en Google Sheets.', admin ? '<button class="btn" id="add-material" '+(blocked?'disabled':'')+'>+ Agregar material</button>' : '')}
+  shell(`${heading('Inventario', 'Consulta los materiales, sus cantidades y los límites de préstamo.', admin ? '<button class="btn" id="add-material" '+(blocked?'disabled':'')+'>+ Agregar material</button>' : '')}
     <div class="cards">${s.materials.map(m=>`<article class="material"><div class="material-visual">${icon(m.icon)}</div><span class="category">${esc(m.category)}</span><h3>${esc(m.name)}</h3><div class="availability"><span class="dot"></span>${m.available} disponibles</div><div class="material-bottom"><span>${m.total} en total</span><span>Máximo ${m.max}</span></div><p class="muted">${m.total-m.available} prestados o reservados · ${m.active?'Activo':'Inactivo'}</p>${admin?`<button class="btn outline small" data-edit-material="${esc(m.id)}" ${blocked?'disabled':''}>Editar inventario</button>`:''}</article>`).join('')}</div>
     ${!s.materials.length?empty('Sin materiales','Actualiza el catálogo o agrega un material.'):''}
     <div class="notice" style="margin-top:22px">Aceptar y entregar descuenta unidades disponibles. Las devoluciones las reincorporan. ${admin?'Puedes ajustar el total y el límite; las unidades prestadas se conservan.':''}</div>`);
@@ -26,7 +26,7 @@ function materialForm(id) {
       <p id="mat-preview" class="notice" aria-live="polite"></p>
       <div class="field"><label for="mat-active">Estado</label><select id="mat-active" name="activo"><option value="true" ${m.active?'selected':''}>Activo</option><option value="false" ${!m.active?'selected':''}>Inactivo</option></select><small>Inactivo impide nuevos préstamos; permite devolver los existentes.</small></div>
       <div class="field"><label for="mat-note">Motivo del cambio</label><textarea id="mat-note" name="nota" required maxlength="500" placeholder="Ejemplo: compra de 3 cables o baja de 1 unidad dañada"></textarea></div>
-      <p class="muted">Si agregas o renombras un material, actualiza también sus preguntas en Google Forms. El límite general de artículos por solicitud sigue aplicando.</p>
+      <p class="muted">Si agregas o cambias el nombre de un material, actualiza también el formulario de registro de alumnos. Se mantiene el máximo general de artículos por solicitud.</p>
       <div class="actions"><button class="btn">Guardar inventario</button><button class="btn outline" type="button" data-close>Cancelar</button></div>
     </form>`,()=>{
     document.querySelector('.dialog').setAttribute('aria-label',id?'Editar inventario':'Agregar material');

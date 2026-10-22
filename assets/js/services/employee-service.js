@@ -29,7 +29,7 @@ const EmployeeStore = (() => {
       clear();
       const d = await ApiClient.post('login', { correo: String(correo).trim(), password });
       const u = employee(d.usuario);
-      if (!u.active || !d.token || !Number.isFinite(Date.parse(d.expira)) || Date.parse(d.expira) <= Date.now()) throw Error('El backend no devolvió una sesión válida.');
+      if (!u.active || !d.token || !Number.isFinite(Date.parse(d.expira)) || Date.parse(d.expira) <= Date.now()) throw Error('No pudimos iniciar tu sesión. Vuelve a intentarlo.');
       session = { token: d.token, expires: d.expira, user: u };
       sessionStorage.setItem(key, JSON.stringify(session));
       return true;

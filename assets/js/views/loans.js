@@ -34,7 +34,7 @@ async function runOperation(task, destination) {
     document.querySelectorAll('.dialog-backdrop').forEach(e=>e.remove());
     if(destination) go(destination);
     const okay=await syncData();
-    toast(okay?'Registro guardado en Google Sheets.':'La operación fue confirmada, pero falta actualizar la vista. Pulsa Actualizar.');
+    toast(okay?'Registro guardado correctamente.':'La operación fue confirmada, pero falta actualizar la vista. Pulsa Actualizar.');
   } catch(e) {
     if(error.isConnected) {
       error.innerHTML=`<div class="error">${esc(e.message)}</div>`;

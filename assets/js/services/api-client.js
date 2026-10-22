@@ -22,36 +22,36 @@ const ApiClient = (() => {
     try {
       const response = await fetch(url.toString(), options);
       if (!response.ok)
-        throw Error(`La API respondió HTTP ${response.status}.`);
+        throw Error(`El servicio no está disponible en este momento (código ${response.status}). Inténtalo de nuevo.`);
       let data;
       try {
         data = await response.json();
       } catch {
         throw Error(
-          "La API no devolvió JSON. Revisa los permisos y la URL de implementación de Apps Script.",
+          "No pudimos leer la respuesta del servicio. Vuelve a intentarlo; si continúa, avisa al administrador.",
         );
       }
       if (!data || data.ok !== true) {
         const error = new Error(
           typeof data?.error === "string"
             ? data.error
-            : "El backend rechazó la operación.",
+            : "No se pudo completar la operación.",
         );
         error.rejected = data?.ok === false && data?.codigo !== 'RESULTADO_INCIERTO';
         if (['SESION_INVALIDA', 'SESION_EXPIRADA'].includes(data?.codigo)) {
           EmployeeStore.clear();
           if (!location.pathname.endsWith('login.html')) location.replace('login.html');
         }
-        if (/acci[oó]n.*(no reconocida|desconocida)|unknown action/i.test(error.message)) error.message = action === 'recordatorios_whatsapp' ? 'El backend publicado no admite recordatorios_whatsapp. Publica la versión que incluye esa acción.' : 'El backend publicado aún no admite esta función. Falta implementar el contrato v2 de la carpeta docs.';
+        if (/acci[oó]n.*(no reconocida|desconocida)|unknown action/i.test(error.message)) error.message = action === 'recordatorios_whatsapp' ? 'Los avisos de WhatsApp todavía no están habilitados. Comunícate con el administrador.' : 'Esta función todavía no está habilitada. Comunícate con el administrador para activarla.';
         throw error;
       }
       return data;
     } catch (cause) {
       const error = new Error(
         cause.name === "AbortError"
-          ? "La API tardó demasiado en responder."
+          ? "La conexión está tardando más de lo esperado. Inténtalo de nuevo."
           : cause instanceof TypeError
-            ? "No fue posible conectar con la API. Revisa internet, los permisos de Apps Script y CORS."
+            ? "No pudimos conectar con el servicio. Revisa tu conexión a internet; si continúa, avisa al administrador."
             : cause.message,
       );
       // Una escritura puede haberse aplicado aun si se perdió la respuesta.
